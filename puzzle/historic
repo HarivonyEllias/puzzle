@@ -1,0 +1,92 @@
+import pygame
+import sys
+import random
+from tkinter import Tk, filedialog, Label, Button, Entry
+
+# Initialize Pygame
+pygame.init()
+
+# Constants
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 600
+PADDING = 5
+
+class PuzzleGame:
+    def __init__(self):
+        self.tk_root = Tk()
+        self.tk_root.title("Image Puzzle Setup")
+
+        self.image_path = None
+        self.puzzle_size = None
+        self.puzzle_pieces = None
+
+        # Labels and Entry widgets for puzzle size
+        Label(self.tk_root, text="Rows:").grid(row=0, column=0)
+        Label(self.tk_root, text="Columns:").grid(row=1, column=0)
+
+        self.entry_rows = Entry(self.tk_root)
+        self.entry_columns = Entry(self.tk_root)
+        self.entry_rows.grid(row=0, column=1)
+        self.entry_columns.grid(row=1, column=1)
+
+        # Button to start the game
+        Button(self.tk_root, text="Start", command=self.start_button_click).grid(row=2, columnspan=2, pady=10)
+
+        # Button to shuffle the puzzle
+        Button(self.tk_root, text="Shuffle", command=self.shuffle_button_click).grid(row=3, columnspan=2)
+
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Image Puzzle")
+
+    def shuffle_button_click(self):
+        if self.puzzle_pieces and self.puzzle_size:
+            shuffle_puzzle(self.puzzle_pieces)
+            self.draw_puzzle()
+
+    def start_button_click(self):
+        # Get image path and puzzle size from user
+        self.image_path = self.get_image_path()
+        self.puzzle_size = (int(self.entry_rows.get()), int(self.entry_columns.get()))
+
+        # Load and divide the image
+        self.puzzle_pieces = self.load_and_divide_image(self.image_path, self.puzzle_size)
+
+        # Draw the initial puzzle
+        self.draw_puzzle()
+
+    def draw_puzzle(self):
+        # Draw the puzzle on the screen
+        self.screen.fill((255, 255, 255))  # White background
+        draw_puzzle(self.screen, self.puzzle_pieces, self.puzzle_size)
+        pygame.display.flip()
+
+    def load_and_divide_image(self, image_path, puzzle_size):
+        original_image = pygame.image.load(image_path)
+        piece_width = original_image.get_width() // puzzle_size[1]
+        piece_height = original_image.get_height() // puzzle_size[0]
+
+        puzzle_pieces = []
+
+        for row in range(puzzle_size[0]):
+            for col in range(puzzle_size[1]):
+                piece_rect = pygame.Rect(col * piece_width, row * piece_height, piece_width, piece_height)
+                piece_surface = pygame.Surface((piece_width, piece_height), pygame.SRCALPHA)
+                piece_surface.blit(original_image, (0, 0), piece_rect)
+                puzzle_pieces.append(piece_surface)
+
+        return puzzle_pieces
+
+    def get_image_path(self):
+        root = Tk()
+        root.withdraw()  # Hide the main window
+
+        file_path = filedialog.askopenfilename(title="Select an image file", filetypes=[("Image files", "*.png;*.jpg;*.jpeg")])
+
+        return file_path
+
+    def run(self):
+        self.tk_root.mainloop()
+
+if __name__ == "__main__":
+    game = PuzzleGame()
+    game.run()
